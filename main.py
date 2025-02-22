@@ -46,3 +46,44 @@ def get_anime():
         })
 
     return {"anime": anime_data}
+
+
+
+@app.get("/anime/details")
+def get_anime_details(url: str = Query(..., title="Anime URL")):
+    """Fetch anime details from the given URL"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return {"error": "Failed to fetch anime details"}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Extract anime details
+    title = soup.find("h1", class_="entry-title").text.strip()
+    overview = "\n".join([p.text.strip() for p in soup.select(".description p")]) or "N/A"
+    genres = [a.text.strip() for a in soup.select(".genres a")]
+    languages = [a.text.strip() for a in soup.select(".loadactor a")]
+    year = soup.select_one(".year .overviewCss").text.strip() if soup.select_one(".year .overviewCss") else "N/A"
+    network = soup.select_one(".network a img")["alt"] if soup.select_one(".network a img") else "N/A"
+
+    # Extract episode details
+    episodes = []
+    for episode in soup.select("#episode_by_temp li"):
+        ep_num = episode.select_one(".num-epi").text.strip()
+        ep_title = episode.select_one(".entry-title").text.strip()
+        ep_link = episode.select_one("a.lnk-blk")["href"]
+        episodes.append({"episode": ep_num, "title": ep_title, "link": ep_link})
+
+    return {
+        "title": title,
+        "overview": overview,
+        "genres": genres,
+        "languages": languages,
+        "year": year,
+        "network": network,
+        "episodes": episodes
+    }
