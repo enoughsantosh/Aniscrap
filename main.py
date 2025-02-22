@@ -48,7 +48,6 @@ def get_anime():
     return {"anime": anime_data}
 
 
-
 @app.get("/anime/details")
 def get_anime_details(url: str = Query(..., title="Anime URL")):
     """Fetch anime details from the given URL"""
@@ -88,6 +87,7 @@ def get_anime_details(url: str = Query(..., title="Anime URL")):
         "episodes": episodes
     }
 
+
 @app.get("/anime/episode")
 def get_episode_details(url: str = Query(..., title="Episode URL")):
     """Fetch episode details, streaming links, background image, and related episodes"""
@@ -124,12 +124,18 @@ def get_episode_details(url: str = Query(..., title="Episode URL")):
     }
 
 
-# URL of the anime website
+@app.get("/anime/categories")
+def get_anime_categories():
+    """Scrape categorized anime data from anime-world.co"""
+    url = "https://anime-world.co"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return {"error": "Failed to fetch anime categories"}
 
-
-# Function to scrape anime data
-def scrape_anime():
-    response = requests.get("https://anime-world.co")
     soup = BeautifulSoup(response.text, "html.parser")
 
     categories = {
@@ -165,9 +171,3 @@ def scrape_anime():
                 extract_anime(section, category)
 
     return categories
-
-
-@app.route("/scrape", methods=["GET"])
-def get_anime():
-    anime_data = scrape_anime()
-    return jsonify(anime_data)
