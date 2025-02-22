@@ -87,3 +87,33 @@ def get_anime_details(url: str = Query(..., title="Anime URL")):
         "network": network,
         "episodes": episodes
     }
+
+@app.get("/anime/episode")
+def get_episode_details(url: str = Query(..., title="Episode URL")):
+    """Fetch episode details, streaming links, and images"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return {"error": "Failed to fetch episode details"}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Scraping Episode Information
+    episode_title = soup.title.text if soup.title else "No Title Found"
+
+    # Scraping Streaming Links
+    streaming_links = [iframe["src"] for iframe in soup.select("iframe") if "src" in iframe.attrs]
+
+    # Scraping Images & Thumbnails
+    image_links = [img["src"] for img in soup.find_all("img") if "src" in img.attrs]
+
+    return {
+        "episode_title": episode_title,
+        "episode_url": url,
+        "streaming_links": streaming_links,
+        "image_links": image_links
+    }
+    
