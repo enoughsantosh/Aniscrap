@@ -226,3 +226,51 @@ def scrape_anime(url):
 @app.get("/anime/detailss")
 def get_anime_details(url: str = Query(..., title="Anime URL")):
     return scrape_anime(url)
+
+def scrape_anime_episode(url):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        return {"error": f"Failed to fetch page: {response.status_code}"}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Get episode title
+    title = soup.find("title").text.strip() if soup.find("title") else "Unknown Title"
+
+    # Get thumbnail image
+    thumbnail_tag = soup.select_one(".post-thumbnail img")
+    thumbnail = thumbnail_tag["src"] if thumbnail_tag else "No Image"
+
+    # Get streaming sources
+    sources = []
+    for iframe in soup.find_all("iframe"):
+        if "src" in iframe.attrs:
+            sources.append(iframe["src"])
+
+    # Get other episodes
+    episodes = []
+    for episode in soup.select(".post.episodes"):
+        episode_title = episode.select_one(".entry-title").text.strip()
+        episode_link = episode.select_one(".lnk-blk")["href"]
+        episode_image = episode.select_one(".post-thumbnail img")["src"]
+        episodes.append({
+            "title": episode_title,
+            "link": episode_link,
+            "image": episode_image
+        })
+
+    return {
+        "title": title,
+        "thumbnail": thumbnail,
+        "streaming_sources": sources,
+        "other_episodes": episodes
+    }
+
+
+
+@app.get("/anime/episodess")
+def get_anime_episode(url: str = Query(..., title="Episode URL")):
+    return scrape_anime_episode(url)
+    
