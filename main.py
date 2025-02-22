@@ -171,3 +171,58 @@ def get_anime_categories():
                 extract_anime(section, category)
 
     return categories
+
+def scrape_anime(url):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code != 200:
+        return {"error": "Failed to fetch the page."}
+    
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    # Scrape Title
+    title = soup.find("h1", class_="entry-title").text.strip() if soup.find("h1", class_="entry-title") else "N/A"
+    
+    # Scrape Description
+    description_div = soup.find("div", class_="description")
+    description = description_div.text.strip() if description_div else "N/A"
+    
+    # Scrape Thumbnail
+    thumbnail = soup.find("img", alt=f"Image {title}")["src"] if soup.find("img", alt=f"Image {title}") else "N/A"
+    
+    # Scrape Genre
+    genre_div = soup.find("p", class_="genres")
+    genres = [a.text for a in genre_div.find_all("a")] if genre_div else []
+    
+    # Scrape Rating
+    rating_span = soup.find("span", class_="num")
+    rating = rating_span.text if rating_span else "N/A"
+    
+    # Scrape Episodes
+    episodes = []
+    episode_list = soup.select("ul#episode_by_temp li article.post")
+    
+    for ep in episode_list:
+        episode_title = ep.find("h2", class_="entry-title").text.strip() if ep.find("h2", class_="entry-title") else "N/A"
+        episode_thumbnail = ep.find("img")["src"] if ep.find("img") else "N/A"
+        episode_link = ep.find("a", class_="lnk-blk")["href"] if ep.find("a", class_="lnk-blk") else "N/A"
+        
+        episodes.append({
+            "title": episode_title,
+            "thumbnail": episode_thumbnail,
+            "link": episode_link
+        })
+    
+    return {
+        "title": title,
+        "description": description,
+        "thumbnail": thumbnail,
+        "genres": genres,
+        "rating": rating,
+        "episodes": episodes
+    }
+
+@app.get("/anime/detailss")
+def get_anime_details(url: str = Query(..., title="Anime URL")):
+    return scrape_anime(url)
