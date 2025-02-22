@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .anime-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .anime-card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+        }
+        .anime-card:hover {
+            transform: scale(1.05);
+        }
+        .anime-card img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .anime-card a {
+            text-decoration: none;
+            color: #00aaff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Anime List</h1>
+    <div class="anime-container" id="animeContainer"></div>
+
+    <script>
+        async function fetchAnime() {
+            try {
+                const response = await fetch("/api/anime");
+                const data = await response.json();
+                const animeContainer = document.getElementById("animeContainer");
+                
+                data.anime.forEach(anime => {
+                    const animeCard = document.createElement("div");
+                    animeCard.className = "anime-card";
+                    animeCard.innerHTML = `
+                        <img src="${anime.image.startsWith('//') ? 'https:' + anime.image : anime.image}" alt="${anime.title}">
+                        <h3>${anime.title}</h3>
+                        <p>${anime.description}</p>
+                        <a href="${anime.link}" target="_blank">Watch Now</a>
+                    `;
+                    animeContainer.appendChild(animeCard);
+                });
+            } catch (error) {
+                console.error("Error fetching anime data:", error);
+            }
+        }
+        fetchAnime();
+    </script>
+</body>
+</html>
