@@ -90,7 +90,7 @@ def get_anime_details(url: str = Query(..., title="Anime URL")):
 
 @app.get("/anime/episode")
 def get_episode_details(url: str = Query(..., title="Episode URL")):
-    """Fetch episode details, streaming links, and images"""
+    """Fetch episode details, streaming links, background image, and related episodes"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -101,19 +101,24 @@ def get_episode_details(url: str = Query(..., title="Episode URL")):
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Scraping Episode Information
+    # Scrape Background Image
+    background_image = soup.find("img", class_="TPostBg")
+    background_image_url = background_image["src"] if background_image else "No Background Image Found"
+
+    # Scrape Episode Title and Thumbnail
     episode_title = soup.title.text if soup.title else "No Title Found"
+    episode_thumbnail = soup.find("figure").find("img")["src"] if soup.find("figure") else "No Thumbnail Found"
 
-    # Scraping Streaming Links
-    streaming_links = [iframe["src"] for iframe in soup.select("iframe") if "src" in iframe.attrs]
+    # Scrape Streaming Server Links
+    server_links = [iframe["src"] for iframe in soup.select("iframe") if "src" in iframe.attrs]
 
-    # Scraping Images & Thumbnails
-    image_links = [img["src"] for img in soup.find_all("img") if "src" in img.attrs]
+    # Scrape Related Episodes
+    related_episodes = [{"title": ep.text.strip(), "url": ep["href"]} for ep in soup.select("ul#episode_by_temp li a")]
 
     return {
         "episode_title": episode_title,
-        "episode_url": url,
-        "streaming_links": streaming_links,
-        "image_links": image_links
+        "episode_thumbnail": episode_thumbnail,
+        "background_image": background_image_url,
+        "streaming_servers": server_links,
+        "related_episodes": related_episodes
     }
-    
