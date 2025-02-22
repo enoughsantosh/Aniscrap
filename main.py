@@ -122,3 +122,52 @@ def get_episode_details(url: str = Query(..., title="Episode URL")):
         "streaming_servers": server_links,
         "related_episodes": related_episodes
     }
+
+
+# URL of the anime website
+
+
+# Function to scrape anime data
+def scrape_anime():
+    response = requests.get("https://anime-world.co")
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    categories = {
+        "New Anime Arrivals": [],
+        "Most-Watched Shows": [],
+        "On-Air Shows": [],
+        "Newest Drops": []
+    }
+
+    def extract_anime(section, category_name):
+        for article in section.find_all("article", class_="post dfx fcl movies"):
+            title_tag = article.find("h2", class_="entry-title")
+            img_tag = article.find("img")
+            link_tag = article.find("a", class_="lnk-blk")
+            season_tag = article.find("span", class_="post-ql")
+            episode_tag = article.find("span", class_="year")
+
+            if title_tag and img_tag and link_tag:
+                anime = {
+                    "title": title_tag.text.strip(),
+                    "image": img_tag["src"],
+                    "link": link_tag["href"],
+                    "season": season_tag.text.strip() if season_tag else "Unknown",
+                    "episode": episode_tag.text.strip() if episode_tag else "Unknown"
+                }
+                categories[category_name].append(anime)
+
+    for category in categories.keys():
+        section_header = soup.find("h3", class_="section-title", text=category)
+        if section_header:
+            section = section_header.find_parent("section")
+            if section:
+                extract_anime(section, category)
+
+    return categories
+
+
+@app.route("/scrape", methods=["GET"])
+def get_anime():
+    anime_data = scrape_anime()
+    return jsonify(anime_data)
