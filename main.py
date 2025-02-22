@@ -246,20 +246,23 @@ def scrape_anime_episode(url):
     # Get streaming sources
     sources = []
     for iframe in soup.find_all("iframe"):
-        if "src" in iframe.attrs:
-            sources.append(iframe["src"])
+        src = iframe.get("src") or iframe.get("data-src")  # Check both src and data-src
+        if src:
+            sources.append(src)
 
     # Get other episodes
     episodes = []
     for episode in soup.select(".post.episodes"):
-        episode_title = episode.select_one(".entry-title").text.strip()
-        episode_link = episode.select_one(".lnk-blk")["href"]
-        episode_image = episode.select_one(".post-thumbnail img")["src"]
-        episodes.append({
-            "title": episode_title,
-            "link": episode_link,
-            "image": episode_image
-        })
+        episode_title_tag = episode.select_one(".entry-title")
+        episode_link_tag = episode.select_one(".lnk-blk")
+        episode_image_tag = episode.select_one(".post-thumbnail img")
+
+        if episode_title_tag and episode_link_tag and episode_image_tag:
+            episodes.append({
+                "title": episode_title_tag.text.strip(),
+                "link": episode_link_tag["href"],
+                "image": episode_image_tag["src"]
+            })
 
     return {
         "title": title,
@@ -267,7 +270,6 @@ def scrape_anime_episode(url):
         "streaming_sources": sources,
         "other_episodes": episodes
     }
-
 
 
 @app.get("/anime/episodess")
