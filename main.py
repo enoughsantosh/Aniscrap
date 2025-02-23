@@ -214,12 +214,27 @@ def scrape_anime(url):
             "link": episode_link
         })
     
+    # Extract Post ID
+    post_id_element = soup.find("li", class_="sel-temp")
+    post_id = post_id_element["data-post"] if post_id_element and "data-post" in post_id_element.attrs else "N/A"
+
+    # Extract Seasons
+    season_list = soup.select("ul.aa-cnt.sub-menu li a")
+    total_seasons = len(season_list) if season_list else 0
+
+    # Extract Current Season
+    current_season_element = soup.find("dt", class_="n_s")
+    current_season = current_season_element.text.strip() if current_season_element else "N/A"
+    
     return {
         "title": title,
         "description": description,
         "thumbnail": thumbnail,
         "genres": genres,
         "rating": rating,
+        "post_id": post_id,
+        "total_seasons": total_seasons,
+        "current_season": current_season,
         "episodes": episodes
     }
 
