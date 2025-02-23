@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
 import requests
+import httpx
 from bs4 import BeautifulSoup
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -290,3 +291,66 @@ def scrape_anime_episode(url):
 def get_anime_episode(url: str = Query(..., title="Episode URL")):
     return scrape_anime_episode(url)
     
+async def fetch_season_data(season: int, post: int):
+    url = "https://anime-world.co/wp-admin/admin-ajax.php"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0"
+    }
+    data = {
+        "action": "action_select_season",
+        "season": season,
+        "post": post
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, data=data)
+
+        if response.status_code != 200:
+            return {"error": f"Failed to fetch page: {response.status_code}"}
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Get episode title
+        title = soup.find("title").text.strip() if soup.find("title") else "Unknown Title"
+
+        # Get thumbnail image
+        thumbnail_tag = soup.select_one(".post-thumbnail img")
+        thumbnail = thumbnail_tag["src"] if thumbnail_tag else "No Image"
+
+        # Get streaming sources
+        sources = []
+        for iframe in soup.find_all("iframe"):
+            src = iframe.get("src") or iframe.get("data-src")  # Check both src and data-src
+            if src:
+                sources.append(src)
+
+        # Get other episodes
+        episodes = []
+        for episode in soup.select(".post.episodes"):
+            episode_title_tag = episode.select_one(".entry-title")
+            episode_link_tag = episode.select_one(".lnk-blk")
+            episode_image_tag = episode.select_one(".post-thumbnail img")
+
+            if episode_title_tag and episode_link_tag and episode_image_tag:
+                episodes.append({
+                    "title": episode_title_tag.text.strip(),
+                    "link": episode_link_tag["href"],
+                    "image": episode_image_tag["src"]
+                })
+
+        return {
+            "title": title,
+            "thumbnail": thumbnail,
+            "streaming_sources": sources,
+            "other_episodes": episodes
+        }
+    
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/anime/season")
+async def get_season_episodes(season: int = Query(...), post: int = Query(...)):
+    data = await fetch_season_data(season, post)
+    return data
