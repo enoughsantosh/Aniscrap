@@ -354,3 +354,30 @@ async def fetch_season_data(season: int, post: int):
 async def get_season_episodes(season: int = Query(...), post: int = Query(...)):
     data = await fetch_season_data(season, post)
     return data
+
+
+def scrape_anime_details(search_query): url = f"https://anime-world.co/?s={search_query}" response = requests.get(url) if response.status_code != 200: return {"error": "Failed to retrieve data"}
+
+soup = BeautifulSoup(response.text, "html.parser")
+anime_list = []
+
+for item in soup.find_all("li", class_="series"):
+    title = item.find("h2", class_="entry-title").text.strip()
+    rating = item.find("span", class_="vote").text.strip()
+    year = item.find("span", class_="year").text.strip()
+    image = item.find("img")["src"]
+    link = item.find("a", class_="lnk-blk")["href"]
+    
+    anime_list.append({
+        "Title": title,
+        "Rating": rating,
+        "Year": year,
+        "Image": image,
+        "Link": link
+    })
+
+return anime_list
+
+@app.get("/search/") def search_anime(q: str): return scrape_anime_details(q)
+
+
