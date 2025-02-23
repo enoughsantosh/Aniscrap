@@ -214,10 +214,9 @@ def scrape_anime(url):
             "link": episode_link
         })
     
-    # Extract Post ID
-    post_id_element = soup.find("li", class_="sel-temp")
+     # Extract Post ID (Fix)
+    post_id_element = soup.select_one("ul.aa-cnt.sub-menu li a")
     post_id = post_id_element["data-post"] if post_id_element and "data-post" in post_id_element.attrs else "N/A"
-
     # Extract Seasons
     season_list = soup.select("ul.aa-cnt.sub-menu li a")
     total_seasons = len(season_list) if season_list else 0
