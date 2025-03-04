@@ -409,3 +409,14 @@ def scrape_epi_s(search_query):
 @app.get("/searchserv/")
 def search_epserv(q: str):
     return scrape_epi_s(q)
+
+def scrape_epi_slist(episode_id: str, server_id: str):
+    url = f"https://aniwa.vercel.app/api/v2/hianime/episode/sources?animeEpisodeId={episode_id}&server={server_id}"
+    response = requests.get(url)
+
+    # Return the JSON response if successful, else return an error message
+    return response.json() if response.status_code == 200 else {"error": "Failed to retrieve data"}
+
+@app.get("/searchservlist/")
+def search_epservlist(episode_id: str, server_id: str):
+    return scrape_epi_slist(episode_id, server_id)
