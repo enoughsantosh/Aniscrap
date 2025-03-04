@@ -386,3 +386,15 @@ def scrape_anime_details(search_query):
 @app.get("/search/")
 def search_anime(q: str):
     return scrape_anime_details(q)
+
+
+def scrape_epi_details(search_query):
+    url = f"https://aniwa.vercel.app/api/v2/hianime/anime/${animeId}{search_query}/episodes"
+    response = requests.get(url)
+
+    # Return the raw response content directly
+    return response.text if response.status_code == 200 else {"error": "Failed to retrieve data"}
+
+@app.get("/searchep/")
+def search_ep(q: str):
+    return scrape_epi_details(q)
