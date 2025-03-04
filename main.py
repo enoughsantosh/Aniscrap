@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query
 import requests
 import httpx
+from pydantic import BaseModel
 from bs4 import BeautifulSoup
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -410,13 +411,21 @@ def scrape_epi_s(search_query):
 def search_epserv(q: str):
     return scrape_epi_s(q)
 
+
+# Define request model for user input
+class EpisodeRequest(BaseModel):
+    episode_id: str
+    server_id: str
+
+# Function to make a GET request to the external API
 def scrape_epi_slist(episode_id: str, server_id: str):
     url = f"https://aniwa.vercel.app/api/v2/hianime/episode/sources?animeEpisodeId={episode_id}&server={server_id}"
     response = requests.get(url)
 
-    # Return the JSON response if successful, else return an error message
+    # Return JSON response if successful, else return an error message
     return response.json() if response.status_code == 200 else {"error": "Failed to retrieve data"}
 
-@app.get("/searchservlist/")
-def search_epservlist(episode_id: str, server_id: str):
-    return scrape_epi_slist(episode_id, server_id)
+# POST request from the user, but internally calls the GET request
+@app.post("/searchservlist/")
+def search_epservlist(request: EpisodeRequest):
+    return scrape_epi_slist(request.episode_id, request.server_id)
