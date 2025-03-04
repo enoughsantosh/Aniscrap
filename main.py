@@ -389,7 +389,7 @@ def search_anime(q: str):
 
 
 def scrape_epi_details(search_query):
-    url = f"https://aniwa.vercel.app/api/v2/hianime/anime/${animeId}{search_query}/episodes"
+    url = f"https://aniwa.vercel.app/api/v2/hianime/anime/${search_query}/episodes"
     response = requests.get(url)
 
     # Return the raw response content directly
