@@ -357,10 +357,12 @@ async def get_season_episodes(season: int = Query(...), post: int = Query(...)):
     return data
 
 
+
+
 def scrape_anime_details(search_query):
     url = f"https://anime-world.co/?s={search_query}"
     response = requests.get(url)
-    
+
     if response.status_code != 200:
         return {"error": "Failed to retrieve data"}
 
@@ -368,15 +370,18 @@ def scrape_anime_details(search_query):
     anime_list = []
 
     for item in soup.find_all("li", class_="series"):
-        title = item.find("h2", class_="entry-title").text.strip() if item.find("h2", class_="entry-title") else "N/A"
-        rating = item.find("span", class_="vote").text.strip() if item.find("span", class_="vote") else "N/A"
-        year = item.find("span", class_="year").text.strip() if item.find("span", class_="year") else "N/A"
-        image = item.find("img")["src"] if item.find("img") else "N/A"
-        link = item.find("a", class_="lnk-blk")["href"] if item.find("a", class_="lnk-blk") else "N/A"
+        title_elem = item.find("h2", class_="entry-title")
+        year_elem = item.find("span", class_="year")
+        img_elem = item.find("img")
+        link_elem = item.find("a", class_="lnk-blk")
+
+        title = title_elem.text.strip() if title_elem else "N/A"
+        year = year_elem.text.strip() if year_elem else "N/A"
+        image = f"https:{img_elem['src']}" if img_elem else "N/A"
+        link = link_elem["href"] if link_elem else "N/A"
 
         anime_list.append({
             "Title": title,
-            "Rating": rating,
             "Year": year,
             "Image": image,
             "Link": link
