@@ -438,3 +438,43 @@ def scrape_epi_slist(episode_id: str, server_id: str):
 @app.post("/searchservlist/")
 def search_epservlist(request: EpisodeRequest):
     return scrape_epi_slist(request.episode_id, request.server_id)
+
+
+@app.get("/")
+def home():
+    return {"message": "Anime Search API is running!"}
+
+@app.get("/searchsugg/")
+def search_animesug(term: str):
+    url = "https://anime-world.co/wp-admin/admin-ajax.php"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0"
+    }
+    data = {
+        "action": "action_tr_search_suggest",
+        "term": term
+    }
+
+    response = requests.post(url, headers=headers, data=data)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        results = []
+        for li in soup.find_all("li", class_="fa-play-circle"):
+            a_tag = li.find("a")
+            if a_tag:
+                anime_type = a_tag.find("span").text if a_tag.find("span") else "unknown"
+                anime_title = a_tag.text.strip().replace(anime_type, "").strip()
+                anime_url = a_tag["href"]
+
+                results.append({
+                    "title": anime_title,
+                    "type": anime_type,
+                    "url": anime_url
+                })
+
+        return results
+    else:
+        return {"error": "Failed to fetch data", "status_code": response.status_code}
