@@ -174,6 +174,8 @@ def get_anime_categories():
 
     return categories
 
+
+
 def scrape_anime(url):
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
@@ -216,12 +218,13 @@ def scrape_anime(url):
             "link": episode_link
         })
     
-     # Extract Post ID (Fix)
+    # Extract Post ID
     post_id_element = soup.select_one("ul.aa-cnt.sub-menu li a")
     post_id = post_id_element["data-post"] if post_id_element and "data-post" in post_id_element.attrs else "N/A"
-    # Extract Seasons
-    season_list = soup.select("ul.aa-cnt.sub-menu li a")
-    total_seasons = len(season_list) if season_list else 0
+
+    # Extract Available Seasons
+    season_list = [season.text.strip() for season in soup.select("ul.aa-cnt.sub-menu li a")]
+    total_seasons = len(season_list)
 
     # Extract Current Season
     current_season_element = soup.find("dt", class_="n_s")
@@ -235,11 +238,12 @@ def scrape_anime(url):
         "rating": rating,
         "post_id": post_id,
         "total_seasons": total_seasons,
+        "available_seasons": season_list,  # Added this line
         "current_season": current_season,
         "episodes": episodes
     }
 
-@app.get("/anime/detailss")
+@app.get("/anime/details")
 def get_anime_details(url: str = Query(..., title="Anime URL")):
     return scrape_anime(url)
 
