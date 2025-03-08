@@ -243,7 +243,7 @@ def scrape_anime(url):
         "episodes": episodes
     }
 
-@app.get("/anime/details")
+@app.get("/anime/detailss")
 def get_anime_details(url: str = Query(..., title="Anime URL")):
     return scrape_anime(url)
 
